@@ -5,10 +5,10 @@ local BaseClass = Object:extend()
 function BaseClass:new(name)
   self._name = name
 end
-function BaseClass:get_name()
+function BaseClass:getName()
   return self._name
 end
-function BaseClass.say_something()
+function BaseClass.getSomething()
   return "something"
 end
 
@@ -17,7 +17,7 @@ local ClassOne = BaseClass:extend()
 function ClassOne:new(name)
   ClassOne.super.new(self, name)
 end
-function ClassOne.say_something()
+function ClassOne.getSomething()
   return "something better"
 end
 
@@ -25,7 +25,7 @@ end
 local ClassTwo = BaseClass:extend()
 function ClassTwo:new(name)
   if name == "wrong" then
-    error({message = "Wrong value"})
+    error("Wrong value")
   end
   ClassTwo.super.new(self, name)
 end
@@ -34,25 +34,41 @@ describe("classic #classic", function()
   describe("Base tests", function()
 
     it("Constructors should work", function()
-      local class_one = ClassOne("Mark")
-      local class_two = ClassTwo("John")
+      local classOne = ClassOne("Mark")
+      local classTwo = ClassTwo("John")
 
-      assert.are.same("Mark", class_one:get_name())
-      assert.are.same("John", class_two:get_name())
+      assert.are.same("Mark", classOne:getName())
+      assert.are.same("John", classTwo:getName())
     end)
     it("Static method should work", function()
-      local class_one = ClassOne("Mark")
-      local class_two = ClassTwo("John")
+      local classOne = ClassOne("Mark")
+      local classTwo = ClassTwo("John")
 
-      assert.are.same("something better", class_one:say_something())
-      assert.are.same("something", class_two:say_something())
+      spy.on(classOne, "getSomething")
+      spy.on(classTwo, "getSomething")
+
+      assert.are.same("something better", classOne.getSomething())
+      assert.are.same("something", classTwo.getSomething())
+
+      -- Make sure no arguments have been passed
+      assert.spy(classOne.getSomething).was_called_with()
+      assert.spy(classTwo.getSomething).was_called_with()
+
+      assert.are.same("something better", classOne.getSomething("hello"))
+      assert.spy(classOne.getSomething).was_called_with("hello")
+
+      -- Removing the spies
+      finally(function()
+        classOne.getSomething:revert()
+        classTwo.getSomething:revert()
+      end)
     end)
     it("Constructor returns error", function()
       local status, res = pcall(ClassTwo, "wrong")
 
       assert.falsy(status)
       assert.truthy(res)
-      assert.are.same("Wrong value", res.message)
+      assert.are.same("Wrong value", string.sub(res, string.len(res) - 10))
     end)
 
   end)
