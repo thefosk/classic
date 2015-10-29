@@ -1,7 +1,7 @@
 package = "classic"
 version = "0.1-1"
 source = {
-  url = "git://github.com/rxi/classic",
+  url = "git://github.com/thefosk/classic",
   branch = "master"
 }
 description = {
